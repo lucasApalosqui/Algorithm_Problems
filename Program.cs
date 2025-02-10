@@ -1,71 +1,70 @@
 ﻿using System;
+using System.Linq;
+using System.Collections.Generic;
 
-public class CalculationException : Exception
+public struct Coord
 {
-    public CalculationException(int operand1, int operand2, string message, Exception inner)
-    // TODO: complete the definition of the constructor
+    public Coord(ushort x, ushort y)
     {
-        Operand1 = operand1;
-        Operand2 = operand2;
-        Message = message;
-        Inner = inner;
+        X = x;
+        Y = y;
     }
 
-    public Exception Inner { get; }
-    public string Message { get; }
-    public int Operand1 { get; }
-    public int Operand2 { get; }
+    public ushort X { get; }
+    public ushort Y { get; }
+
+    public int Mult() =>
+        X * Y;
 }
 
-public class CalculatorTestHarness
+public struct Plot
 {
-    private Calculator calculator;
-
-    public CalculatorTestHarness(Calculator calculator)
+    public Plot(Coord coord1, Coord coord2, Coord coord3, Coord coord4)
     {
-        this.calculator = calculator;
+        Coord1 = coord1;
+        Coord2 = coord2;
+        Coord3 = coord3;
+        Coord4 = coord4;
     }
 
-    public string TestMultiplication(int x, int y)
-    {
-        try
-        {
-            Multiply(x, y);
-            return "Multiply succeeded";
-        }
-        catch (CalculationException ex)
-        {
-            return (x > 0 || y > 0) ? $"Multiply failed for mixed or positive operands. {ex.Message}" : $"Multiply failed for negative operands. {ex.Message}";
-        }
-        
-    }
-
-    public void Multiply(int x, int y)
-    {
-        try
-        {
-            checked {
-                int r = x * y; }
-
-        } catch
-        {
-            throw new CalculationException(x, y, "Arithmetic operation resulted in an overflow.", new OverflowException());
-        }
-        
-    }
+    public Coord Coord1 { get; }
+    public Coord Coord2 { get; }
+    public Coord Coord3 { get; }
+    public Coord Coord4 { get; }
 }
 
 
-// Please do not modify the code below.
-// If there is an overflow in the multiplication operation
-// then a System.OverflowException is thrown.
-public class Calculator
+public class ClaimsHandler
 {
-    public int Multiply(int x, int y)
+    private List<Plot> _plot = new List<Plot>();
+    public void StakeClaim(Plot plot) =>
+        _plot.Add(plot);
+
+    public bool IsClaimStaked(Plot plot) =>
+        (_plot.Contains(plot)) ? true : false; 
+
+
+    public bool IsLastClaim(Plot plot) =>
+        (_plot.Last().Equals(plot)) ? true : false;
+
+
+    public Plot GetClaimWithLongestSide()
     {
-        checked
+        int longest = 0;
+        Plot longestPlot = new Plot();
+        foreach (Plot plot in _plot)
         {
-            return x * y;
+            if (longest < CalculateCoords(plot))
+            {
+                longest = CalculateCoords(plot);
+                longestPlot = plot;
+            }
         }
+
+        return longestPlot;
     }
+
+    private int CalculateCoords(Plot plot) =>
+         plot.Coord1.Mult() + plot.Coord2.Mult() + plot.Coord3.Mult() + plot.Coord4.Mult();
+
 }
