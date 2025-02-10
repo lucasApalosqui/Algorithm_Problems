@@ -1,72 +1,71 @@
 ﻿using System;
-using System.Globalization;
-using System.Linq;
-//Console.WriteLine(HighSchoolSweethearts.DisplayGermanExchangeStudents("Norbert", "Heidi", new DateTime(2019, 1, 22), 1535.22f));
-public static class HighSchoolSweethearts
+
+public class CalculationException : Exception
 {
-    public static string DisplaySingleLine(string studentA, string studentB)
+    public CalculationException(int operand1, int operand2, string message, Exception inner)
+    // TODO: complete the definition of the constructor
     {
-        string str = $"{studentA} ♡ {studentB}";
-        return CentralizeStr(str, '♡');
+        Operand1 = operand1;
+        Operand2 = operand2;
+        Message = message;
+        Inner = inner;
     }
 
-    public static string DisplayBanner(string studentA, string studentB)
+    public Exception Inner { get; }
+    public string Message { get; }
+    public int Operand1 { get; }
+    public int Operand2 { get; }
+}
+
+public class CalculatorTestHarness
+{
+    private Calculator calculator;
+
+    public CalculatorTestHarness(Calculator calculator)
     {
-        return $@"
-{DoHeartLines("     ******   ", ' ', 5)}
-{DoHeartLines("   **      ** ", ' ', 3)}
-{DoHeartLines(" **         **", ' ', 1)}
-{DoHeartLines("**            ", '*', 0)}
-{DoHeartLines("**            ", ' ', 0)}
-{DoHeartCenterLine("**            ", '+', studentA, studentB)}
-{DoHeartLines(" **           ", ' ', 1)}
-{DoHeartLines("   **         ", ' ', 3)}
-{DoHeartLines("     **       ", ' ', 5)}
-{DoHeartLines("       **     ", ' ', 7)}
-{DoHeartLines("         **   ", ' ', 9)}
-{DoHeartLines("           ** ", ' ', 11)}
-{DoHeartLines("             *", '*', 13)}
-{DoHeartLines("              ", '*', 14)}";
+        this.calculator = calculator;
     }
 
-    public static string DisplayGermanExchangeStudents(string studentA
-        , string studentB, DateTime start, float hours)
+    public string TestMultiplication(int x, int y)
     {
-        return $"{studentA} and {studentB} have been dating since {start.ToString("dd.MM.yyyy")} - that's {hours.ToString("N2", new CultureInfo("pt-BR"))} hours";
-    }
-
-
-    //Utils
-    private static string CentralizeStr(string str, char symbol)
-    {
-        var strNew = str.Split(symbol);
-        int left = 30 - strNew[0].Length;
-        int right = 30 - strNew[1].Length;
-        return $"{new string(' ', left)}{str}{new string(' ', right)}";
-    }
-
-    private static string DoHeartLines(string symbols, char center, int EmptyToDelete)
-    {
-        var reverSym = "";
-        foreach (var symbol in symbols.Reverse())
-            reverSym += symbol.ToString();
-        reverSym = (EmptyToDelete <= 13) ? reverSym.Remove(14 - EmptyToDelete, EmptyToDelete) : reverSym;
-
-        return (symbols.Length == 14) ? $"{symbols}{center}{reverSym}" : throw new ArgumentException();
-    }
-
-    private static string DoHeartCenterLine(string symbols, char center, string student1, string student2)
-    {
-        var str = DoHeartLines(symbols, center, 0);
-        str = ReplaceHelp(str, 7, 6, $"{student1}");
-        return ReplaceHelp(str, 17, 6, $"{student2}");
+        try
+        {
+            Multiply(x, y);
+            return "Multiply succeeded";
+        }
+        catch (CalculationException ex)
+        {
+            return (x > 0 || y > 0) ? $"Multiply failed for mixed or positive operands. {ex.Message}" : $"Multiply failed for negative operands. {ex.Message}";
+        }
         
     }
 
-    private static string ReplaceHelp(string text, int start, int count,
-                             string replacement)
+    public void Multiply(int x, int y)
     {
-        return text.Substring(0, start) + replacement
-             + text.Substring(start + count);
+        try
+        {
+            checked {
+                int r = x * y; }
+
+        } catch
+        {
+            throw new CalculationException(x, y, "Arithmetic operation resulted in an overflow.", new OverflowException());
+        }
+        
+    }
+}
+
+
+// Please do not modify the code below.
+// If there is an overflow in the multiplication operation
+// then a System.OverflowException is thrown.
+public class Calculator
+{
+    public int Multiply(int x, int y)
+    {
+        checked
+        {
+            return x * y;
+        }
     }
 }
