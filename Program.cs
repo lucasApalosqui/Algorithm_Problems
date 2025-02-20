@@ -1,70 +1,130 @@
 ﻿using System;
-using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Collections.Generic;
+using System.Linq;
 
-public struct Coord
+public class LogParser
 {
-    public Coord(ushort x, ushort y)
+    public bool IsValidLine(string text)
     {
-        X = x;
-        Y = y;
+        var logline = text.Substring(0, 5);
+        if (logline.Contains("[") && logline.Contains("]"))
+            return (Enum.TryParse<Log>(logline.Substring(1, 3).ToUpper(), out var result)) ? true : false;
+        return false;
     }
 
-    public ushort X { get; }
-    public ushort Y { get; }
-
-    public int Mult() =>
-        X * Y;
-}
-
-public struct Plot
-{
-    public Plot(Coord coord1, Coord coord2, Coord coord3, Coord coord4)
+    public string[] SplitLogLine(string text)
     {
-        Coord1 = coord1;
-        Coord2 = coord2;
-        Coord3 = coord3;
-        Coord4 = coord4;
-    }
-
-    public Coord Coord1 { get; }
-    public Coord Coord2 { get; }
-    public Coord Coord3 { get; }
-    public Coord Coord4 { get; }
-}
-
-
-public class ClaimsHandler
-{
-    private List<Plot> _plot = new List<Plot>();
-    public void StakeClaim(Plot plot) =>
-        _plot.Add(plot);
-
-    public bool IsClaimStaked(Plot plot) =>
-        (_plot.Contains(plot)) ? true : false; 
-
-
-    public bool IsLastClaim(Plot plot) =>
-        (_plot.Last().Equals(plot)) ? true : false;
-
-
-    public Plot GetClaimWithLongestSide()
-    {
-        int longest = 0;
-        Plot longestPlot = new Plot();
-        foreach (Plot plot in _plot)
+        var builder = new StringBuilder();
+        bool verify = false;
+        foreach (var cha in text)
         {
-            if (longest < CalculateCoords(plot))
+            if (cha == '<') verify = true;
+            builder.Append(cha switch
             {
-                longest = CalculateCoords(plot);
-                longestPlot = plot;
-            }
+                '>' => '&',
+                _ when verify == true => null,
+                _ => cha
+            });
+            if (cha == '>') verify = false;
         }
-
-        return longestPlot;
+        return builder.ToString().Split('&');
     }
 
-    private int CalculateCoords(Plot plot) =>
-         plot.Coord1.Mult() + plot.Coord2.Mult() + plot.Coord3.Mult() + plot.Coord4.Mult();
+    public int CountQuotedPasswords(string lines)
+    {
+        int count = 0;
+        var separateStr = SepareStringByQuotes(lines);
+        foreach (string strings in separateStr)
+            if(strings.ToUpper().Contains("PASSWORD")) count++;
+        return count;
+    }
 
+    public string RemoveEndOfLineText(string line)
+    {
+        var Words = line.Split(' ');
+        string cleanLine = "";
+        for (int i = 0; i < Words.Length; i++)
+        {
+            if (!Words[i].Contains("end-of-line")) cleanLine += Words[i] + " ";
+            else if (Words[i] != Words[Words.Length - 1]) cleanLine += " ";
+        }
+           
+        return cleanLine;    
+    }
+
+    public string[] ListLinesWithPasswords(string[] lines)
+    {
+        string[] strings = new string[lines.Length];
+        string refactLine = "";
+        string passW = "";
+        int count = 0;
+        foreach (string line in lines)
+        {
+            var words = line.Split(" ");
+            int lastCont = 1;
+            foreach (string word in words)
+            {
+                
+                if (word.ToLower().Contains("password"))
+                {
+                    passW = (word.ToLower().Equals("password")) ? "--------: " : $"{word}: ";
+                }
+                refactLine += (lastCont != words.Length) ? $"{word} " : word;
+                lastCont++;
+            }
+            lastCont = 1;
+            strings[count] = passW + refactLine;
+            count++;
+            refactLine = "";
+        }
+        return strings;
+    }
+
+
+    // Utils
+    private List<string> SepareStringByQuotes(string lines)
+    {
+        List<string> separateStr = new List<string>();
+        var build = new StringBuilder();
+        int quoteCount = 0;
+
+        foreach (char line in lines)
+        {
+            build.Append(line switch
+            {
+                '"' => null,
+                _ when char.IsControl(line) => null,
+                _ => line
+            });
+
+            if (line == '"')
+            {
+                quoteCount++;
+                if (quoteCount == 1 && build.Length != 0)
+                    build = new StringBuilder();
+
+                if (quoteCount == 2)
+                {
+                    separateStr.Add(build.ToString());
+                    build = new StringBuilder();
+                    quoteCount = 0;
+                }
+
+            }
+
+        }
+        return separateStr;
+    }
+}
+
+public enum Log
+{
+    TRC,
+    DBG,
+    INF,
+    WRN,
+    ERR,
+    FTL
 }
