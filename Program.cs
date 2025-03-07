@@ -1,45 +1,84 @@
 ﻿using System;
-using System.ComponentModel.Design;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
-public class Authenticator
+public struct CurrencyAmount
 {
-    // TODO: Implement the Authenticator.Admin property
-    public Identity Admin = new Identity()
+    private decimal amount;
+    private string currency;
+
+    public CurrencyAmount(decimal amount, string currency)
     {
-        Email = "admin@ex.ism",
-        FacialFeatures = new FacialFeatures { EyeColor = "green", PhiltrumWidth = 0.9M },
-        NameAndAddress = new List<string> { "Chanakya", "Mumbai", "India" }
-    };
+        this.amount = amount;
+        this.currency = currency;
+    }
 
-    // TODO: Implement the Authenticator.Developers property
-    public IDictionary<string, Identity> Developers = new Dictionary<string, Identity>
+    // TODO: implement equality operators
+    public static bool operator ==(CurrencyAmount lhs, CurrencyAmount rhs)
     {
-        { "Bertrand", new Identity
-            {
-                Email = "bert@ex.ism",
-                FacialFeatures = new FacialFeatures { EyeColor = "blue", PhiltrumWidth = 0.8M },
-                NameAndAddress = new List<string> { "Bertrand", "Paris", "France" }
-            }},
-        { "Anders", new Identity
-            {
-                Email = "anders@ex.ism",
-                FacialFeatures = new FacialFeatures { EyeColor = "brown", PhiltrumWidth = 0.85M },
-                NameAndAddress = new List<string> { "Anders", "Redmond", "USA" }
-            }}
-    };
-}
+        verifyCurrency(lhs, rhs);
+        return (lhs.Equals(rhs)) ? true : false;
+    }
 
-//**** please do not modify the FacialFeatures class ****
-public class FacialFeatures
-{
-    public required string EyeColor { get; set; }
-    public required decimal PhiltrumWidth { get; set; }
-}
+    public static bool operator !=(CurrencyAmount lhs, CurrencyAmount rhs)
+    {
+        verifyCurrency(lhs, rhs);
+        return (lhs.Equals(rhs)) ? false : true;
+    }
 
-//**** please do not modify the Identity class ****
-public class Identity
-{
-    public required string Email { get; set; }
-    public required FacialFeatures FacialFeatures { get; set; }
-    public required IList<string> NameAndAddress { get; set; }
+    public override bool Equals([NotNullWhen(true)] object? obj) =>
+        base.Equals(obj);
+
+    public override int GetHashCode() =>
+        base.GetHashCode();
+
+    // TODO: implement comparison operators
+    public static bool operator >(CurrencyAmount lhs, CurrencyAmount rhs)
+    {
+        verifyCurrency(lhs, rhs);
+        return (lhs.amount > rhs.amount) ? true : false;
+    }
+    public static bool operator <(CurrencyAmount lhs, CurrencyAmount rhs)
+    {
+        verifyCurrency(lhs, rhs);
+        return (lhs.amount < rhs.amount) ? true : false;
+    }
+
+    // TODO: implement arithmetic operators
+    public static CurrencyAmount operator +(CurrencyAmount lhs, CurrencyAmount rhs)
+    {
+        verifyCurrency(lhs, rhs);
+        return new CurrencyAmount((lhs.amount + rhs.amount), lhs.currency);
+    }
+    public static CurrencyAmount operator -(CurrencyAmount lhs, CurrencyAmount rhs)
+    {
+        verifyCurrency(lhs, rhs);
+        return new CurrencyAmount((lhs.amount - rhs.amount), lhs.currency);
+    }
+    public static CurrencyAmount operator *(CurrencyAmount lhs, decimal mult) =>
+        new CurrencyAmount((mult * lhs.amount), lhs.currency);
+
+    public static CurrencyAmount operator *( decimal mult, CurrencyAmount lhs) =>
+     new CurrencyAmount((mult * lhs.amount), lhs.currency);
+
+    public static CurrencyAmount operator /(CurrencyAmount lhs, decimal mult)
+    {
+        return new CurrencyAmount((lhs.amount / mult), lhs.currency);
+    }
+
+    // TODO: implement type conversion operators
+    public static explicit operator double(CurrencyAmount lhs) =>
+        (double)lhs.amount;
+
+    public static implicit operator decimal(CurrencyAmount lhs) =>
+       lhs.amount;
+
+
+
+    //Utils
+    private static void verifyCurrency(CurrencyAmount lhs, CurrencyAmount rhs)
+    {
+        if (lhs.currency != rhs.currency) throw new ArgumentException();
+    }
+
 }
