@@ -1,84 +1,63 @@
-﻿using System;
-using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
-
-public struct CurrencyAmount
+﻿public class RemoteControlCar
 {
-    private decimal amount;
-    private string currency;
+    private int batteryPercentage = 100;
+    private int distanceDrivenInMeters = 0;
+    private string[] sponsors = new string[0];
+    private int latestSerialNum = 0;
 
-    public CurrencyAmount(decimal amount, string currency)
+    public void Drive()
     {
-        this.amount = amount;
-        this.currency = currency;
+        if (batteryPercentage > 0)
+        {
+            batteryPercentage -= 10;
+            distanceDrivenInMeters += 2;
+        }
     }
 
-    // TODO: implement equality operators
-    public static bool operator ==(CurrencyAmount lhs, CurrencyAmount rhs)
+    public void SetSponsors(params string[] sponsors)
     {
-        verifyCurrency(lhs, rhs);
-        return (lhs.Equals(rhs)) ? true : false;
+        this.sponsors = sponsors.ToArray();
     }
 
-    public static bool operator !=(CurrencyAmount lhs, CurrencyAmount rhs)
+    public string DisplaySponsor(int sponsorNum)
     {
-        verifyCurrency(lhs, rhs);
-        return (lhs.Equals(rhs)) ? false : true;
+        return sponsors[sponsorNum];
     }
 
-    public override bool Equals([NotNullWhen(true)] object? obj) =>
-        base.Equals(obj);
-
-    public override int GetHashCode() =>
-        base.GetHashCode();
-
-    // TODO: implement comparison operators
-    public static bool operator >(CurrencyAmount lhs, CurrencyAmount rhs)
+    public bool GetTelemetryData(ref int serialNum,
+        out int batteryPercentage, out int distanceDrivenInMeters)
     {
-        verifyCurrency(lhs, rhs);
-        return (lhs.amount > rhs.amount) ? true : false;
-    }
-    public static bool operator <(CurrencyAmount lhs, CurrencyAmount rhs)
-    {
-        verifyCurrency(lhs, rhs);
-        return (lhs.amount < rhs.amount) ? true : false;
+        if(this.latestSerialNum > serialNum)
+        {
+            batteryPercentage = -1;
+            distanceDrivenInMeters = -1;
+            serialNum = latestSerialNum;
+            return false;
+        }
+        batteryPercentage = this.batteryPercentage;
+        distanceDrivenInMeters = this.distanceDrivenInMeters;
+        latestSerialNum = serialNum;
+        return true;
     }
 
-    // TODO: implement arithmetic operators
-    public static CurrencyAmount operator +(CurrencyAmount lhs, CurrencyAmount rhs)
-    {
-        verifyCurrency(lhs, rhs);
-        return new CurrencyAmount((lhs.amount + rhs.amount), lhs.currency);
-    }
-    public static CurrencyAmount operator -(CurrencyAmount lhs, CurrencyAmount rhs)
-    {
-        verifyCurrency(lhs, rhs);
-        return new CurrencyAmount((lhs.amount - rhs.amount), lhs.currency);
-    }
-    public static CurrencyAmount operator *(CurrencyAmount lhs, decimal mult) =>
-        new CurrencyAmount((mult * lhs.amount), lhs.currency);
 
-    public static CurrencyAmount operator *( decimal mult, CurrencyAmount lhs) =>
-     new CurrencyAmount((mult * lhs.amount), lhs.currency);
-
-    public static CurrencyAmount operator /(CurrencyAmount lhs, decimal mult)
+    public static RemoteControlCar Buy()
     {
-        return new CurrencyAmount((lhs.amount / mult), lhs.currency);
+        return new RemoteControlCar();
+    }
+}
+
+public class TelemetryClient
+{
+    private RemoteControlCar car;
+
+    public TelemetryClient(RemoteControlCar car)
+    {
+        this.car = car;
     }
 
-    // TODO: implement type conversion operators
-    public static explicit operator double(CurrencyAmount lhs) =>
-        (double)lhs.amount;
+    public string GetBatteryUsagePerMeter(int serialNum) =>
 
-    public static implicit operator decimal(CurrencyAmount lhs) =>
-       lhs.amount;
-
-
-
-    //Utils
-    private static void verifyCurrency(CurrencyAmount lhs, CurrencyAmount rhs)
-    {
-        if (lhs.currency != rhs.currency) throw new ArgumentException();
-    }
+        (!car.GetTelemetryData(ref serialNum, out int battery, out int distance) || battery == 100) ? "no data" : $"usage-per-meter={(100 - battery) / distance}";
 
 }
